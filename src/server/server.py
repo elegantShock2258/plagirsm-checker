@@ -10,7 +10,7 @@ import rabin_karp
 import numpy as np
 from os.path import dirname, join
 import re
-
+import cgi
 
 class PlagiarismChecker:
     def __init__(self, file_a, file_b):
@@ -45,7 +45,7 @@ class PlagiarismChecker:
         # Formular for plagiarism rate
         # P = (2 * SH / THA * THB ) 100%
         p = (float(2 * sh)/(th_a + th_b)) * 100
-        val = [sh,a,b,th_a,th_b]
+        val = [sh, a, b, th_a, th_b]
         return [val, p]
 
     # Prepare content by removing stopwords, steemming and tokenizing
@@ -74,37 +74,33 @@ def check_plagirism(a, b):
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        # Parse the request URL
-        parsed_url = urlparse(self.path)
-        query_params = parse_qs(parsed_url.query)
+    def do_POST(self):
+  
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length).decode('utf-8')
+        if self.headers.get('Content-Type', "") == "application/x-www-form-urlencoded":
+              parsed_data = urllib.parse.parse_qs(post_data)
+        
+            d1 = query_params['d1'][0]
+            d2 = query_params['d2'][0]
+            print(d1, d2)
+            result = check_plagirism(d1, d2)
 
-        # Get the text1 and text2 parameters
-        text1 = query_params.get('text1', [''])[0]
-        text2 = query_params.get('text2', [''])[0]
+            result_json = json.dumps({"val": result[0], "p": result[1]})
 
-        # Check if both parameters are provided
-        if not text1 or not text2:
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(bytes(result_json, "utf-8"))
+        else:
             self.send_response(400)
+            self.send_header('Content-type', 'text/plain')
             self.end_headers()
             self.wfile.write(
-                bytes("Error: Both text1 and text2 parameters are required", "utf-8"))
-            return
-
-        # Run the plagiarism check function
-        result = check_plagirism(text1, text2)  # Assuming check_plagiarism returns an array with elements "val" and "p"
-
-        # Convert the result to JSON
-        result_json = json.dumps({"val": result[0], "p": result[1]})
-
-        # Send the response with the JSON data
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        self.wfile.write(bytes(result_json, "utf-8"))
+                bytes('Bad Request: Missing form data parameters', 'utf-8'))
 
 
-def run_server(server_class=HTTPServer, handler_class=RequestHandler, port=8000):
+def run_server(server_class=HTTPServer, handler_class=RequestHandler, port=4437):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
     print(f"Server started on port {port}")
