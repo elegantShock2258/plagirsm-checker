@@ -15,6 +15,7 @@ import json
 import threading
 import math as Math
 
+
 class PlagiarismChecker:
     def __init__(self, file_a, file_b):
         stop_words = set(stopwords.words('english'))
@@ -83,6 +84,10 @@ def check_plagirism(a, b):
 
 
 class RequestHandler(BaseHTTPRequestHandler):
+    def end_headers (self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        BaseHTTPRequestHandler.end_headers(self)
+
     def do_POST(self):
 
         # Get content length from headers
@@ -91,15 +96,22 @@ class RequestHandler(BaseHTTPRequestHandler):
         post_data = json.loads(self.rfile.read(content_length).decode('utf-8'))
         d1 = (post_data['d1'])
         d2 = (post_data['d2'])
-        print("got d1 and d2", len(d1), len(d2))
-        result = check_plagirism(d1, d2)
-        print(result)
-        result_json = json.dumps({"val": result[0], "p": result[1]})
+        
+        if 'd1' in post_data and 'd2' in post_data:
+            print("got d1 and d2", len(d1), len(d2))
+            result = check_plagirism(d1, d2)
+            print(result)
+            result_json = json.dumps({"val": result[0], "p": result[1]}).encode()
 
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
-        self.wfile.write(bytes(result_json, "utf-8"))
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(result_json)
+        else:
+            self.send_response(400)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Missing d1 and d2"}).encode())
 
 
 def run_server(server_class=HTTPServer, handler_class=RequestHandler, port=4437):

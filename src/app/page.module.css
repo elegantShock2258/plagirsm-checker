@@ -45,6 +45,10 @@
   padding: 60px;
 }
 
+.fileView {
+  width: 80vw;
+}
+
 .submitButton {
   font-family: Poppins;
   font-size: 26px;
@@ -59,4 +63,25 @@
   transform: translateY(-80%);
 }
 
-/*# sourceMappingURL=page.module.css.map */
+.filesParent {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 10px;
+}
+
+.file {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.container {
+  display: flex;
+  gap: 20px;
+}
+
+.remove {
+  font-size: 0.6em;
+  align-self: flex-start;
+}/*# sourceMappingURL=page.module.css.map */

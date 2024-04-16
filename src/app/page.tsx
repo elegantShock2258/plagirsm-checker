@@ -3,6 +3,7 @@ import { useDropzone } from "react-dropzone";
 
 import styles from "./page.module.css";
 import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const getBase64 = async (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -11,9 +12,28 @@ const getBase64 = async (file: File) =>
     reader.onload = () => resolve(reader.result?.toString()!);
     reader.onerror = (error) => reject(error);
   });
+function fileSize(size: number) {
+  const KB = 1024;
+  const MB = KB * 1024;
+  const GB = MB * 1024;
 
+  if (size < KB) {
+    return `${size} bytes`;
+  } else if (size < MB) {
+    return `${(size / KB).toFixed(2)} KB`;
+  } else if (size < GB) {
+    return `${(size / MB).toFixed(2)} MB`;
+  } else {
+    return `${(size / GB).toFixed(2)} GB`;
+  }
+}
 export default function Home() {
   let [files, setFiles] = useState<File[]>([]);
+  let router = useRouter();
+  function removeFile(i: number) {
+    files.splice(i, 1);
+    setFiles(files);
+  }
   async function submit() {
     let d1 = await getBase64(files[0]);
     let d2 = await getBase64(files[1]);
@@ -21,23 +41,16 @@ export default function Home() {
     const formData = new FormData();
     formData.append("d1", d1);
     formData.append("d2", d2);
-
     fetch("http://localhost:4437", {
       method: "POST",
-      mode: "no-cors",
       body: JSON.stringify({ d1: d1, d2: d2 }),
     })
-      .then((response) => {
-        console.log(response);
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
+      .then(async (response) => {
+        let data = await response.json();
         localStorage.setItem("response", JSON.stringify(data));
+        router.push("/result");
       })
+      .then((data) => {})
       .catch((error) => {
         console.error("There was a problem with the fetch operation:", error);
       });
@@ -59,19 +72,37 @@ export default function Home() {
     <>
       <div className={styles.parent}>
         <div className={styles.title}>PLAGIARISM CHECKER</div>
-        <div className={styles.info}>
-          Upload two documents and know the percentage of plagiarism that both
-          paper exhibits
-        </div>
+        {files.length < 2 && (
+          <div className={styles.info}>
+            Upload two documents and know the percentage of plagiarism that both
+            paper exhibits
+          </div>
+        )}
 
-        <div className={styles.fileInp} {...getRootProps()}>
+        <div
+          className={`${styles.fileInp} ${files.length >= 1 ? styles.fileView : ""}`}
+          {...getRootProps()}
+        >
           <input {...getInputProps()} />
           {files.length > 0 ? (
             <div className={styles.filesParent}>
-              {files.map((file) => {
+              {files.map((file, i) => {
                 return (
-                  <div key={file.name} className={styles.filesInfo}>
-                    {file.name}
+                  <div key={file.name} className={styles.file}>
+                    <div className={styles.filesInfo}>{file.name}</div>
+                    <div className={styles.container}>
+                      <div className={styles.filesSize}>
+                        {fileSize(file.size)}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          removeFile(i);
+                        }}
+                        className={styles.remove}
+                      >
+                        x
+                      </button>
+                    </div>
                   </div>
                 );
               })}
