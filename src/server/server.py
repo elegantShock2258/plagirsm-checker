@@ -10,12 +10,14 @@ import rabin_karp
 import numpy as np
 from os.path import dirname, join
 import re
-import cgi
+import base64
+import json
+
 
 class PlagiarismChecker:
     def __init__(self, file_a, file_b):
         self.hash_table = {"a": [], "b": []}
-        self.k_gram = 5
+        self.k_gram = 900
 
         self.calculate_hash(file_a, "a")
         self.calculate_hash(file_b, "b")
@@ -23,14 +25,12 @@ class PlagiarismChecker:
     def calculate_hash(self, content, doc_type):
         text = self.prepare_content(content)
         text = "".join(text)
-        print(text)
-
         text = rabin_karp.rolling_hash(text, self.k_gram)
         for _ in range(len(content) - self.k_gram + 1):
             self.hash_table[doc_type].append(text.hash)
             if text.next_window() == False:
                 break
-        print(self.hash_table)
+        # print(self.hash_table)
 
     def get_rate(self):
         return self.calaculate_plagiarism_rate(self.hash_table)
@@ -45,7 +45,7 @@ class PlagiarismChecker:
         # Formular for plagiarism rate
         # P = (2 * SH / THA * THB ) 100%
         p = (float(2 * sh)/(th_a + th_b)) * 100
-        val = [sh, a, b, th_a, th_b]
+        val = [sh, th_a, th_b]
         return [val, p]
 
     # Prepare content by removing stopwords, steemming and tokenizing
@@ -75,28 +75,22 @@ def check_plagirism(a, b):
 
 class RequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
-  
-        content_length = int(self.headers.get('Content-Length', 0))
-        post_data = self.rfile.read(content_length).decode('utf-8')
-        if self.headers.get('Content-Type', "") == "application/x-www-form-urlencoded":
-        
-            d1 = query_params['d1'][0]
-            d2 = query_params['d2'][0]
-            print(d1, d2)
-            result = check_plagirism(d1, d2)
 
-            result_json = json.dumps({"val": result[0], "p": result[1]})
+        # Get content length from headers
+        content_length = int(self.headers['Content-Length'])
+        # Read the request body
+        post_data = json.loads(self.rfile.read(content_length).decode('utf-8'))
+        d1 = (post_data['d1'])
+        d2 = (post_data['d2'])
+        print("got d1 and d2", len(d1), len(d2))
+        result = check_plagirism(d1, d2)
+        print(result)
+        result_json = json.dumps({"val": result[0], "p": result[1]})
 
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(bytes(result_json, "utf-8"))
-        else:
-            self.send_response(400)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(
-                bytes('Bad Request: Missing form data parameters', 'utf-8'))
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(bytes(result_json, "utf-8"))
 
 
 def run_server(server_class=HTTPServer, handler_class=RequestHandler, port=4437):
