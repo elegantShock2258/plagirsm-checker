@@ -12,25 +12,35 @@ from os.path import dirname, join
 import re
 import base64
 import json
-
+import threading
+import math as Math
 
 class PlagiarismChecker:
     def __init__(self, file_a, file_b):
+        stop_words = set(stopwords.words('english'))
+
         self.hash_table = {"a": [], "b": []}
-        self.k_gram = 900
+        self.k_gram = 400 + Math.ceil(max(len(file_a), len(file_b))*0.0001 + 1)
 
-        self.calculate_hash(file_a, "a")
-        self.calculate_hash(file_b, "b")
+        thread1 = threading.Thread(
+            target=self.calculate_hash, args=(file_a, "a", stop_words))
+        thread2 = threading.Thread(
+            target=self.calculate_hash, args=(file_b, "b", stop_words))
 
-    def calculate_hash(self, content, doc_type):
-        text = self.prepare_content(content)
+        thread1.start()
+        thread2.start()
+
+        thread1.join()
+        thread2.join()
+
+    def calculate_hash(self, content, doc_type, stop_words):
+        text = self.prepare_content(content, stop_words)
         text = "".join(text)
         text = rabin_karp.rolling_hash(text, self.k_gram)
         for _ in range(len(content) - self.k_gram + 1):
             self.hash_table[doc_type].append(text.hash)
             if text.next_window() == False:
                 break
-        # print(self.hash_table)
 
     def get_rate(self):
         return self.calaculate_plagiarism_rate(self.hash_table)
@@ -50,9 +60,8 @@ class PlagiarismChecker:
 
     # Prepare content by removing stopwords, steemming and tokenizing
 
-    def prepare_content(self, content):
+    def prepare_content(self, content, stop_words):
         # STOP WORDS
-        stop_words = set(stopwords.words('english'))
         # TOKENIZE
         word_tokens = word_tokenize(content)
 

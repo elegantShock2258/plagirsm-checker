@@ -6,7 +6,7 @@ class rolling_hash:
         self.base = 26
         self.window_start = 0
         self.window_end = 0
-        self.mod = 5807
+        self.mod = 11932
         self.hash = self.get_hash(text, patternSize)
 
     def get_hash(self, text, patternSize):
