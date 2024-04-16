@@ -79,7 +79,6 @@ class RequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers.get('Content-Length', 0))
         post_data = self.rfile.read(content_length).decode('utf-8')
         if self.headers.get('Content-Type', "") == "application/x-www-form-urlencoded":
-              parsed_data = urllib.parse.parse_qs(post_data)
         
             d1 = query_params['d1'][0]
             d2 = query_params['d2'][0]

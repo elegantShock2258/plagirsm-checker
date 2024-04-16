@@ -1,0 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+.parent, .overlays, .fg {
+  width: 100vw;
+  height: 100vh;
+  grid-area: 1/1;
+}
+
+.parent {
+  background-image: url("/bg.jpeg");
+  background-size: cover;
+  display: grid;
+}
+
+.overlays {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+.overlays .circle1 {
+  background: rgba(0, 0, 0, 0.5882352941);
+  width: 80vw;
+  height: 80vw;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.overlays .circle1 .circle2 {
+  background: rgba(255, 255, 255, 0.0470588235);
+  width: 45vw;
+  height: 45vw;
+  border-radius: 50%;
+}
+
+/*# sourceMappingURL=globals.css.map */
