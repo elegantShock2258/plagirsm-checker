@@ -41,7 +41,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("d1", d1);
     formData.append("d2", d2);
-    fetch("https://plagirsm-checker.vercel.app:4437/", {
+    fetch(`${window.location.origin}:4437/`, {
       method: "POST",
       body: JSON.stringify({ d1: d1, d2: d2 }),
     })
